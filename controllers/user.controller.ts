@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose';
 import User from "../models/user.model";
 
 const secret = process.env.JWT_SECRET;
@@ -100,6 +101,46 @@ export const userLogin = async (req, res) => {
         return res.status(404).json({
             error: true,
             msg: 'Wrong Credentials'
+        })
+
+    } catch (e) {
+        return res.status(500).send({
+            error: true,
+            msg: 'Server failed'
+        })
+    }
+}
+
+export const searchUser = async (req, res) => {
+    try {
+        let { query } = req;
+        const { _id } = res.locals.user || {};
+        let filter: any = {}
+        console.log(_id)
+
+        // @ts-ignore
+        let data = await User.aggregate([
+            {
+                $match: {
+                    $expr: { $ne: ["$_id", new mongoose.Types.ObjectId(_id)] }
+                }
+
+            },
+            ...(!!query.search ? [
+                {
+                    $match: {
+                        $or: [
+                            { name: { $regex: new RegExp(query.search.toLowerCase(), "i") } },
+                            { email: { $regex: new RegExp(query.search.toLowerCase(), "i") } }
+                        ]
+                    }
+                }
+            ] : []),
+        ])
+
+        return res.status(200).json({
+            error: false,
+            data
         })
 
     } catch (e) {

@@ -18,7 +18,7 @@ const io = require('socket.io')(http, {
     }
 });
 
-
+import decodeToken from './auth';
 import apiRouters from './routes/api'
 
 // database connection
@@ -51,7 +51,7 @@ app.use(function (req, res, next) {
 });
 app.use(cors());
 
-
+app.use(decodeToken)
 app.use('/api', apiRouters);
 
 // server welcome message
